@@ -5,11 +5,8 @@ import { OwnershipTransferred, Trade } from "./model";
 import { processor, Contract } from "./processor";
 
 export const concatID = (hash: string, logindex: number) => {
-	// Convert logIndex to Buffer with little-endian encoding
 	const buffer = Buffer.alloc(4);
 	buffer.writeInt32LE(logindex, 0);
-
-	// Hexify the result
 	const result = `${hash}${buffer.toString("hex")}`;
 	return result;
 };
@@ -51,6 +48,7 @@ processor.run(new TypeormDatabase({ supportHotBlocks: true }), async (ctx) => {
 					trade.push(
 						new Trade({
 							id: concatID(e.transactionHash, e.logIndex),
+
 							blockNumber: BigInt(e?.block?.height),
 							blockTimestamp: BigInt(e?.block?.timestamp),
 							ethAmount,
@@ -68,6 +66,63 @@ processor.run(new TypeormDatabase({ supportHotBlocks: true }), async (ctx) => {
 			}
 		}
 	}
+
 	await ctx.store.upsert(ownershipTransferred);
 	await ctx.store.upsert(trade);
 });
+
+// 	const ownershipTransferred: OwnershipTransferred[] = [];
+// 	const trade: Trade[] = [];
+
+// 	for (const c of ctx.blocks) {
+// 		for (const e of c.logs) {
+// 			e.address === Contract
+// 				? e.topics[0] === FriendtechAbi.events["OwnershipTransferred"].topic
+// 					? ownershipTransferred.push(
+// 							new OwnershipTransferred({
+// 								id: concatID(e.transactionHash, e.logIndex),
+// 								previousOwner: decodeHex(
+// 									FriendtechAbi.events["OwnershipTransferred"].decode(e)
+// 										.previousOwner
+// 								),
+// 								newOwner: decodeHex(
+// 									FriendtechAbi.events["OwnershipTransferred"].decode(e)
+// 										.newOwner
+// 								),
+// 								blockNumber: BigInt(e.block?.height),
+// 								blockTimestamp: BigInt(e.block?.timestamp),
+// 								transactionHash: decodeHex(e.transactionHash),
+// 							})
+// 					  )
+// 					: e.topics[0] === FriendtechAbi.events["Trade"].topic
+// 					? trade.push(
+// 							new Trade({
+// 								id: concatID(e.transactionHash, e.logIndex),
+// 								blockNumber: BigInt(e?.block?.height),
+// 								blockTimestamp: BigInt(e?.block?.timestamp),
+// 								ethAmount: FriendtechAbi.events["Trade"].decode(e).ethAmount,
+// 								isBuy: FriendtechAbi.events["Trade"].decode(e).isBuy,
+// 								protocolEthAmount: FriendtechAbi.events["Trade"].decode(e)
+// 									.protocolEthAmount,
+// 								shareAmount: FriendtechAbi.events["Trade"].decode(e)
+// 									.shareAmount,
+// 								subject: decodeHex(
+// 									FriendtechAbi.events["Trade"].decode(e).subject
+// 								),
+// 								subjectEthAmount: FriendtechAbi.events["Trade"].decode(e)
+// 									.subjectEthAmount,
+// 								supply: FriendtechAbi.events["Trade"].decode(e).supply,
+// 								trader: decodeHex(
+// 									FriendtechAbi.events["Trade"].decode(e).trader
+// 								),
+// 								transactionHash: decodeHex(e.transactionHash),
+// 							})
+// 					  )
+// 					: null
+// 				: null;
+// 		}
+// 	}
+
+// 	await ctx.store.upsert(ownershipTransferred);
+// 	await ctx.store.upsert(trade);
+// });
